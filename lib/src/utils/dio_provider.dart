@@ -1,12 +1,10 @@
 import 'package:dio/dio.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:tmdb_movie_app_riverpod/src/utils/logger_interceptor.dart';
 
-part 'dio_provider.g.dart';
+import 'package:tmdb_movie_app_result_notifier/src/utils/logger_interceptor.dart';
+import 'package:tmdb_movie_app_result_notifier/src/utils/service_provider.dart';
 
-@riverpod
-Dio dio(DioRef ref) {
+final dioProvider = SingletonService.provide((locator) {
   final dio = Dio();
   dio.interceptors.add(LoggerInterceptor());
   return dio;
-}
+});

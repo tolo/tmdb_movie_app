@@ -15,4 +15,7 @@ class MoviesPagination {
 
   @override
   int get hashCode => query.hashCode ^ page.hashCode;
+
+  @override
+  String toString() => 'MoviesPagination(page: $page, query: $query)';
 }

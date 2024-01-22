@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "tmdb_movie_app_riverpod",
+            "name": "tmdb_movie_app_result_notifier",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "tmdb_movie_app_riverpod (profile mode)",
+            "name": "tmdb_movie_app_result_notifier (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "tmdb_movie_app_riverpod (release mode)",
+            "name": "tmdb_movie_app_result_notifier (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"

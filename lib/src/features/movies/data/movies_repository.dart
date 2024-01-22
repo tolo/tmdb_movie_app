@@ -1,15 +1,14 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:tmdb_movie_app_riverpod/env/env.dart';
-import 'package:tmdb_movie_app_riverpod/src/features/movies/data/movies_pagination.dart';
-import 'package:tmdb_movie_app_riverpod/src/features/movies/domain/tmdb_movie.dart';
-import 'package:tmdb_movie_app_riverpod/src/features/movies/domain/tmdb_movies_response.dart';
-import 'package:tmdb_movie_app_riverpod/src/utils/cancel_token_ref.dart';
-import 'package:tmdb_movie_app_riverpod/src/utils/dio_provider.dart';
+import 'package:result_notifier/result_notifier.dart';
+import 'package:tmdb_movie_app_result_notifier/env/env.dart';
+import 'package:tmdb_movie_app_result_notifier/src/features/movies/data/movies_pagination.dart';
+import 'package:tmdb_movie_app_result_notifier/src/features/movies/domain/tmdb_movie.dart';
+import 'package:tmdb_movie_app_result_notifier/src/features/movies/domain/tmdb_movies_response.dart';
+import 'package:tmdb_movie_app_result_notifier/src/utils/cancellable_notifier.dart';
+import 'package:tmdb_movie_app_result_notifier/src/utils/service_provider.dart';
 
-part 'movies_repository.g.dart';
 
 class MoviesRepository {
   MoviesRepository({required this.client, required this.apiKey});
@@ -67,76 +66,60 @@ class MoviesRepository {
   }
 }
 
-@riverpod
-MoviesRepository moviesRepository(MoviesRepositoryRef ref) => MoviesRepository(
-      client: ref.watch(dioProvider),
-      apiKey: Env.tmdbApiKey,
-    );
+typedef MovieListCache = ResultStore<MoviesPagination, List<TMDBMovie>>;
 
-class AbortedException implements Exception {}
+final moviesServiceProvider = SingletonService.provide(
+  (serviceLocator) => MoviesService(MoviesRepository(
+    client: serviceLocator.get<Dio>(),
+    apiKey: Env.tmdbApiKey,
+  )),
+);
 
-/// Provider to fetch a movie by ID
-@riverpod
-Future<TMDBMovie> movie(
-  MovieRef ref, {
-  required int movieId,
-}) {
-  final cancelToken = ref.cancelToken();
-  return ref
-      .watch(moviesRepositoryProvider)
-      .movie(movieId: movieId, cancelToken: cancelToken);
-}
+class MoviesService {
+  MoviesService(this.repository);
 
-/// Provider to fetch paginated movies data
-@riverpod
-Future<List<TMDBMovie>> fetchMovies(
-  FetchMoviesRef ref, {
-  required MoviesPagination pagination,
-}) async {
-  final moviesRepo = ref.watch(moviesRepositoryProvider);
-  // See this for how the timeout is implemented:
-  // https://codewithandrea.com/articles/flutter-riverpod-data-caching-providers-lifecycle/#caching-with-timeout
-  // Cancel the page request if the UI no longer needs it.
-  // This happens if the user scrolls very fast or if we type a different search
-  // term.
-  final cancelToken = CancelToken();
-  // When a page is no-longer used, keep it in the cache.
-  final link = ref.keepAlive();
-  // a timer to be used by the callbacks below
-  Timer? timer;
-  // When the provider is destroyed, cancel the http request and the timer
-  ref.onDispose(() {
-    cancelToken.cancel();
-    timer?.cancel();
-  });
-  // When the last listener is removed, start a timer to dispose the cached data
-  ref.onCancel(() {
-    // start a 30 second timer
-    timer = Timer(const Duration(seconds: 30), () {
-      // dispose on timeout
-      link.close();
-    });
-  });
-  // If the provider is listened again after it was paused, cancel the timer
-  ref.onResume(() {
-    timer?.cancel();
-  });
-  if (pagination.query.isEmpty) {
-    // use non-search endpoint
-    return moviesRepo.nowPlayingMovies(
-      page: pagination.page,
-      cancelToken: cancelToken,
+  final MoviesRepository repository;
+
+  FutureNotifier<TMDBMovie> movieDetails(int movieId) {
+    return CancellableNotifier<TMDBMovie>(
+      id: 'movieDetails ($movieId)',
+      fetch: (cancelToken) => repository.movie(
+        movieId: movieId,
+        cancelToken: cancelToken,
+      ),
     );
-  } else {
-    // Debounce the request. By having this delay, consumers can subscribe to
-    // different parameters. In which case, this request will be aborted.
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (cancelToken.isCancelled) throw AbortedException();
-    // use search endpoint
-    return moviesRepo.searchMovies(
-      page: pagination.page,
-      query: pagination.query,
-      cancelToken: cancelToken,
+  }
+
+  MovieListCache moviesListCache() {
+    return ResultStore<MoviesPagination, List<TMDBMovie>>(
+      autoDispose: true,
+      create: (pagination, store) =>
+        CancellableNotifier(
+          id: pagination.toString(),
+          fetch: (cancelToken) => _fetchMovies(pagination, cancelToken),
+          expiration: const Duration(seconds: 30),
+        ),
     );
+  }
+
+  Future<List<TMDBMovie>> _fetchMovies(MoviesPagination pagination, CancelToken cancelToken) async {
+    if (pagination.query.isEmpty) {
+      // use non-search endpoint
+      return repository.nowPlayingMovies(
+        page: pagination.page,
+        cancelToken: cancelToken,
+      );
+    } else {
+      // Debounce the request. By having this delay, consumers can subscribe to
+      // different parameters. In which case, this request will be aborted.
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (cancelToken.isCancelled) throw CancelledException();
+      // use search endpoint
+      return repository.searchMovies(
+        page: pagination.page,
+        query: pagination.query,
+        cancelToken: cancelToken,
+      );
+    }
   }
 }

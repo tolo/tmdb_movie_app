@@ -1,6 +1,6 @@
 {
-    "name": "tmdb_movie_app_riverpod",
-    "short_name": "tmdb_movie_app_riverpod",
+    "name": "tmdb_movie_app_result_notifier",
+    "short_name": "tmdb_movie_app_result_notifier",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

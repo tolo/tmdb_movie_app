@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tmdb_movie_app_riverpod/src/features/favorites/presentation/favorites_screen.dart';
-import 'package:tmdb_movie_app_riverpod/src/features/movies/domain/tmdb_movie.dart';
-import 'package:tmdb_movie_app_riverpod/src/features/movies/presentation/movie_details/movie_details_screen.dart';
-import 'package:tmdb_movie_app_riverpod/src/features/movies/presentation/movies/movies_search_screen.dart';
-import 'package:tmdb_movie_app_riverpod/src/routing/scaffold_with_nested_navigation.dart';
+import 'package:tmdb_movie_app_result_notifier/src/features/favorites/presentation/favorites_screen.dart';
+import 'package:tmdb_movie_app_result_notifier/src/features/movies/domain/tmdb_movie.dart';
+import 'package:tmdb_movie_app_result_notifier/src/features/movies/presentation/movie_details/movie_details_screen.dart';
+import 'package:tmdb_movie_app_result_notifier/src/features/movies/presentation/movies/movies_search_screen.dart';
+import 'package:tmdb_movie_app_result_notifier/src/routing/scaffold_with_nested_navigation.dart';
+import 'package:tmdb_movie_app_result_notifier/src/utils/service_provider.dart';
 
 enum AppRoute {
   movies,
@@ -19,7 +19,7 @@ final _searchNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'search');
 final _favoritesNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'favorites');
 
-final goRouterProvider = Provider<GoRouter>((ref) {
+final goRouterProvider = SingletonService.provide((_) {
   return GoRouter(
     initialLocation: '/movies',
     navigatorKey: _rootNavigatorKey,
