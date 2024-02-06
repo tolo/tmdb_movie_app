@@ -5,10 +5,14 @@ import 'package:dio/dio.dart';
 class LoggerInterceptor implements Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    log('❌ Dio Error!');
-    log('❌ Url: ${err.requestOptions.uri}');
-    log('❌ ${err.stackTrace}');
-    log('❌ Response Error: ${err.response?.data}');
+    if (err.type == DioExceptionType.cancel) {
+      log('🗑 Dio request cancelled: ${err.requestOptions.uri}');
+    } else {
+      log('❌ Dio Error!');
+      log('❌ Url: ${err.requestOptions.uri}');
+      log('❌ ${err.stackTrace}');
+      log('❌ Response Error: ${err.response?.data}');
+    }
     return handler.next(err);
   }
 
