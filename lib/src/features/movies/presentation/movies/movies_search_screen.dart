@@ -10,27 +10,24 @@ import 'package:tmdb_movie_app_result_notifier/src/routing/app_router.dart';
 import 'package:tmdb_movie_app_result_notifier/src/utils/service_provider.dart';
 
 class MoviesSearchScreen extends ResourceProvider<ValueNotifier<String>> {
-  const MoviesSearchScreen({super.key});
+  const MoviesSearchScreen({super.key}) : super.custom();
 
   @override
   ValueNotifier<String> createResource(BuildContext context) => ValueNotifier('');
 
   @override
   Widget build(BuildContext context, ValueNotifier<String> resource) {
-    return ListenableBuilder(listenable: resource, builder: (context, _)
-      => buildWithQuery(context, resource));
-  }
+    final query = resource.watch(ref);
 
-  Widget buildWithQuery(BuildContext context, ValueNotifier<String> query) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('TMDB Movies'),
       ),
       body: Column(
         children: [
-          MoviesSearchBar(query: query),
+          MoviesSearchBar(queryState: resource),
           Expanded(
-            child: MovieList(query: query.value),
+            child: MovieList(query: query),
           ),
         ],
       ),
@@ -39,7 +36,7 @@ class MoviesSearchScreen extends ResourceProvider<ValueNotifier<String>> {
 }
 
 class MovieList extends ResourceProvider<MovieListCache> {
-  MovieList({required this.query}) : super(key: ValueKey('MovieListQuery:$query'));
+  MovieList({required this.query}) : super.custom(key: ValueKey('MovieListQuery:$query'));
 
   static const pageSize = 20;
 

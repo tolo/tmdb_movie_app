@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class MoviesSearchBar extends StatefulWidget {
-  const MoviesSearchBar({super.key, required this.query});
+  const MoviesSearchBar({super.key, required this.queryState});
 
-  final ValueNotifier<String> query;
+  final ValueNotifier<String> queryState;
 
   @override
   State<StatefulWidget> createState() => _SearchBarState();
@@ -50,7 +50,7 @@ class _SearchBarState extends State<MoviesSearchBar> {
                       onEditingComplete: () {
                         FocusManager.instance.primaryFocus?.unfocus();
                       },
-                      onChanged: (text) => widget.query.value = text
+                      onChanged: (text) => widget.queryState.value = text
                     ),
                   ),
                 ),

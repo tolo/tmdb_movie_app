@@ -28,23 +28,22 @@ class MovieDetailsScreen extends StatelessWidget {
         ),
       );
     } else {
-      return _LoadMovieDetails(movieId: movieId);
+      return ResourceProvider(
+        create: (context) => context.service<MoviesService>().movieDetails(movieId),
+        builder: (context, notifier) => _LoadMovieDetails(movie: notifier),
+      );
     }
   }
 }
 
-class _LoadMovieDetails extends ResultNotifierProvider<TMDBMovie> {
-  const _LoadMovieDetails({required this.movieId});
-  final int movieId;
+class _LoadMovieDetails extends WatcherWidget {
+  const _LoadMovieDetails({required this.movie});
+
+  final ResultNotifier<TMDBMovie> movie;
 
   @override
-  ResultNotifier<TMDBMovie> createResource(BuildContext context) {
-    return context.service<MoviesService>().movieDetails(movieId);
-  }
-
-  @override
-  Widget buildResult(BuildContext context, ResultNotifier<TMDBMovie> notifier, Result<TMDBMovie> result) {
-    return result.when(
+  Widget build(WatcherContext context) {
+    return movie.watch(context).when(
       error: (e, st, movie) => Scaffold(
         appBar: AppBar(
           title: Text(movie?.title ?? 'Error'),
