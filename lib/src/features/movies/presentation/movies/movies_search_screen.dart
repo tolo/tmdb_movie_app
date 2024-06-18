@@ -76,26 +76,26 @@ class MovieList extends ResourceProvider<MovieListCache> {
           // Note that ref.watch is called for up to pageSize items
           // with the same page and query arguments (but this is ok since data is cached)
           final moviesList = moviesListCache.value(MoviesPagination(page: page, query: query));
-          return moviesList.when(
+          switch(moviesList) {
             // TODO: Improve error handling
-            error: (err, stack, movies) => Text('Error $err'),
-            loading: (_) => const MovieListTileShimmer(),
-            data: (movies) {
-              if (indexInPage >= movies.length) {
-                return const MovieListTileShimmer();
+            case Error result: return Text('Error ${result.error}');
+            case Loading _: return const MovieListTileShimmer();
+            case Data result: {
+                if (indexInPage >= result.data.length) {
+                  return const MovieListTileShimmer();
+                }
+                final movie = result.data[indexInPage];
+                return MovieListTile(
+                  movie: movie,
+                  debugIndex: index,
+                  onPressed: () => context.goNamed(
+                        AppRoute.movie.name,
+                        pathParameters: {'id': movie.id.toString()},
+                        extra: movie,
+                      ),
+                );
               }
-              final movie = movies[indexInPage];
-              return MovieListTile(
-                movie: movie,
-                debugIndex: index,
-                onPressed: () => context.goNamed(
-                  AppRoute.movie.name,
-                  pathParameters: {'id': movie.id.toString()},
-                  extra: movie,
-                ),
-              );
-            },
-          );
+          }
         }),
       ),
     );

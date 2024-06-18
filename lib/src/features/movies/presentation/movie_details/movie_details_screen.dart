@@ -42,34 +42,33 @@ class _LoadMovieDetails extends WatcherWidget {
   final ResultNotifier<TMDBMovie> movie;
 
   @override
-  Widget build(WatcherContext context) {
-    return movie.watch(context).when(
-      error: (e, st, movie) => Scaffold(
-        appBar: AppBar(
-          title: Text(movie?.title ?? 'Error'),
+  Widget build(WatcherContext context) =>
+      switch(movie.watch(context)) {
+        (Error result) => Scaffold(
+          appBar: AppBar(
+            title: Text(result.data?.title ?? 'Error'),
+          ),
+          body: Center(child: Text(result.error.toString())),
         ),
-        body: Center(child: Text(e.toString())),
-      ),
-      loading: (movie) => Scaffold(
-        appBar: AppBar(
-          title: Text(movie?.title ?? 'Loading'),
+        (Loading result) => Scaffold(
+          appBar: AppBar(
+            title: Text(result.data?.title ?? 'Loading'),
+          ),
+          body: const Column(
+            children: [
+              MovieListTileShimmer(),
+            ],
+          ),
         ),
-        body: const Column(
-          children: [
-            MovieListTileShimmer(),
-          ],
+        (Data result) => Scaffold(
+          appBar: AppBar(
+            title: Text(result.data.title),
+          ),
+          body: Column(
+            children: [
+              MovieListTile(movie: result.data),
+            ],
+          ),
         ),
-      ),
-      data: (movie) => Scaffold(
-        appBar: AppBar(
-          title: Text(movie.title),
-        ),
-        body: Column(
-          children: [
-            MovieListTile(movie: movie),
-          ],
-        ),
-      ),
-    );
-  }
+      };
 }
